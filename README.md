@@ -1,5 +1,5 @@
 Zabbix com Docker Compose
 
-O objetivo deste arquivo é provisionar um ambiente do Zabbix em Docker, utilizando as imagens oficiais. Alem do Zabbix, vamos criar um container para o MYSQL e Grafana.
+O arquivo docker-compose.yml que disponibilizamos em nosso Github, foi configurado de forma que o Docker crie 4 containers: zabbix-server, zabbix-frontend, grafana e mysql. Foram utilizadas as imagens oficiais do Zabbix, do Grafana e do MySQL. Os links para consulta estão no final deste artigo. 
 
-Ao executar o Docker Compose, vamos subir de forma automatizada o Zabbix, conectado ao MySQL, criando o banco de dados. Em seguida, será conectado o Zabbix frontend e por ultimo o Grafana com o plugin do Zabbix instalado.
+Ao executar o comando docker-compose up, o Docker irá subir de forma automática os containers do Zabbix, do Grafana e do MySQL. Além disso, o Zabbix já estará conectado ao banco de dados MySQL e o Grafana já estará com o plugin do Zabbix instalado.
