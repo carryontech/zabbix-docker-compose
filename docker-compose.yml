@@ -29,7 +29,6 @@ services:
       - mysql
     restart: always
     ports:
-      - '10050:10050'
       - '10051:10051'
     volumes:
       - './zabbix/alertscripts:/usr/lib/zabbix/alertscripts'
