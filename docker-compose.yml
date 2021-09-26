@@ -1,89 +1,86 @@
-version: '3.1'
+version: "3.7"
 
 networks:
-  network-zabbix:
-    driver: bridge
+  net:
+    driver: overlay
+    attachable: true
 
 services:
-  zabbix-db:
+  mysql:
     image: mysql:5.7
-    volumes:
-      - './zabbix/mysql:/var/lib/data'
+    ports:
+      - '3306:3306'
     environment:
-      - MYSQL_ROOT_PASSWORD=carryontech
-      - MYSQL_DATABASE=zabbix
-      - MYSQL_USER=zabbix
-      - MYSQL_PASSWORD=carryontech
-    deploy:
-      mode: replicated
-      replicas: 1
-      restart_policy:
-        condition: on-failure
-      resources:
-        limits:
-          cpus: '1'
-          memory: 128M
-        reservations:
-          memory: 256M
+      - MYSQL_ROOT_PASSWORD=y7QKucyMrHLNzpv7
+      - MYSQL_DATABASE=zabbix_db
+      - MYSQL_USER=usr_zabbix
+      - MYSQL_PASSWORD=y7QKucyMrHLNzpv7
+    networks:
+      - net
 
   zabbix-server:
     image: zabbix/zabbix-server-mysql:ubuntu-5.0.1
+    links:
+      - mysql
+    restart: always
     ports:
       - '10051:10051'
-    volumes:
-      - './zabbix/alertscripts:/usr/lib/zabbix/alertscripts'
+
     environment:
-      - DB_SERVER_HOST=zabbix-db
-      - MYSQL_DATABASE=zabbix
-      - MYSQL_USER=zabbix
-      - MYSQL_PASSWORD=carryontech
-    deploy:
-      mode: replicated
-      replicas: 1
-      restart_policy:
-        condition: on-failure
-      resources:
-        limits:
-          cpus: '1'
-          memory: 128M
-        reservations:
-          memory: 256M
-  zabbix-web:
+      - DB_SERVER_HOST=mysql
+      - MYSQL_DATABASE=zabbix_db
+      - MYSQL_USER=usr_zabbix
+      - MYSQL_PASSWORD=y7QKucyMrHLNzpv7
+    depends_on:
+      - mysql
+    networks:
+      - net
+
+  zabbix-frontend:
     image: zabbix/zabbix-web-apache-mysql:ubuntu-5.0.1
+    links:
+      - mysql
+    restart: always
     ports:
       - '80:8080'
       - '443:8443'
     environment:
       - DB_SERVER_HOST=mysql
-      - MYSQL_DATABASE=zabbix
-      - MYSQL_USER=zabbix
-      - MYSQL_PASSWORD=carryontech
+      - MYSQL_DATABASE=zabbix_db
+      - MYSQL_USER=usr_zabbix
+      - MYSQL_PASSWORD=y7QKucyMrHLNzpv7
       - PHP_TZ=America/Sao_Paulo
-    deploy:
-      mode: replicated
-      replicas: 1
-      restart_policy:
-        condition: on-failure
-      resources:
-        limits:
-          cpus: '1'
-          memory: 128M
-        reservations:
-          memory: 256M
+    depends_on:
+      - mysql
+    networks:
+      - net
+   
   grafana:
     image: grafana/grafana
+    links:
+      - mysql
+      - zabbix-server
+    restart: always
     ports:
       - '3000:3000'
     environment: 
       - GF_INSTALL_PLUGINS=alexanderzobnin-zabbix-app
+    depends_on:
+      - mysql
+      - zabbix-server
   zabbix-agent:
     image: zabbix/zabbix-agent2:alpine-5.0.1
     user: root
+
+    links:
+      - zabbix-server
+    restart: always
     privileged: true
-    volumes:
-      - /var/run:/var/run
+
     ports:
       - '10050:10050'
     environment:
       - ZBX_HOSTNAME=Zabbix server
       - ZBX_SERVER_HOST=172.18.0.1
+    networks:
+      - net
