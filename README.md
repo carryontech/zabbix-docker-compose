@@ -1,4 +1,4 @@
-# Zabbix com Docker Compose
+# Zabbix com Docker Compose :whale:
 
 O arquivo docker-compose.yml que disponibilizamos em nosso Github, foi configurado de forma que o Docker crie 4 containers: zabbix-server, zabbix-frontend, grafana e mysql. Foram utilizadas as imagens oficiais do Zabbix, do Grafana e do MySQL. Os links para consulta estão no final deste artigo. 
 
