@@ -31,6 +31,7 @@ services:
       - MYSQL_DATABASE=zabbix_db
       - MYSQL_USER=usr_zabbix
       - MYSQL_PASSWORD=y7QKucyMrHLNzpv7
+      - ALTER DATABASE zabbix CHARACTER SET utf8 collate utf8_bin; 
     depends_on:
       - mysql
     networks:
@@ -80,7 +81,7 @@ services:
     ports:
       - '10050:10050'
     environment:
-      - ZBX_HOSTNAME=Zabbix server
+      - ZBX_HOSTNAME=zabbix-server
       - ZBX_SERVER_HOST=172.18.0.1
     networks:
       - net
