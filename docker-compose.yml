@@ -13,7 +13,7 @@ services:
     ports:
       - '3306:3306'
     volumes:
-      - './zabbix/mysql:/var/lib/data'
+      - './zabbix/mysql:/var/lib/mysql'
     environment:
       - MYSQL_ROOT_PASSWORD=carryontech
       - MYSQL_DATABASE=zabbix
