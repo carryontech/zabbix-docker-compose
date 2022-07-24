@@ -15,10 +15,10 @@ services:
     volumes:
       - './zabbix/mysql:/var/lib/data'
     environment:
-      - MYSQL_ROOT_PASSWORD=carryontech
+      - MYSQL_ROOT_PASSWORD=zabbixmonitor@T2#123
       - MYSQL_DATABASE=zabbix
       - MYSQL_USER=zabbix
-      - MYSQL_PASSWORD=carryontech
+      - MYSQL_PASSWORD=zabbixmonitor@T2#123
 
   zabbix-server:
     container_name: zabbix-server
@@ -36,7 +36,7 @@ services:
       - DB_SERVER_HOST=mysql
       - MYSQL_DATABASE=zabbix
       - MYSQL_USER=zabbix
-      - MYSQL_PASSWORD=carryontech
+      - MYSQL_PASSWORD=zabbixmonitor@T2#123
     depends_on:
       - mysql
 
@@ -55,7 +55,7 @@ services:
       - DB_SERVER_HOST=mysql
       - MYSQL_DATABASE=zabbix
       - MYSQL_USER=zabbix
-      - MYSQL_PASSWORD=carryontech
+      - MYSQL_PASSWORD=zabbixmonitor@T2#123
       - PHP_TZ=America/Sao_Paulo
     depends_on:
       - mysql
@@ -93,4 +93,3 @@ services:
     environment:
       - ZBX_HOSTNAME=Zabbix server
       - ZBX_SERVER_HOST=172.18.0.1
-    
