@@ -7,3 +7,8 @@ Ao executar o comando docker-compose up, o Docker irá subir de forma automátic
 Executar o seguinte comando na pasta que esta localizado o arquivo docker-compose.yml para suber os containers:
 
 docker-compose up -d
+
+
+### Infrastructure model
+
+![Infrastructure model](.infragenie/infrastructure_model.png)
