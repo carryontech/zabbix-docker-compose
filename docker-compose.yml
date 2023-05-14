@@ -65,7 +65,7 @@ services:
     ports:
       - '3000:3000'
     environment: 
-      - GF_INSTALL_PLUGINS=alexanderzobnin-zabbix-app
+      - GF_INSTALL_PLUGINS=alexanderzobnin-zabbix-app,grafana-piechart-panel,jdbranham-diagram-panel,snuids-trafficlights-panel,camptocamp-prometheus-alertmanager-datasource,doitintl-bigquery-datasource
     depends_on:
       - mysql
       - zabbix-server
