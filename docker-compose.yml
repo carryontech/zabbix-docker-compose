@@ -1,87 +1,168 @@
-version: "3.7"
-
+version: '3.8'
 networks:
   net:
     driver: overlay
     attachable: true
-
 services:
-  mysql:
-    image: mysql:5.7
-    ports:
-      - '3306:3306'
+  pgsql:
+    image: postgres:13
+    volumes:
+      - ${STACK_VOLUME}/pgsql/data/:/var/lib/postgresql/data
     environment:
-      - MYSQL_ROOT_PASSWORD=y7QKucyMrHLNzpv7
-      - MYSQL_DATABASE=zabbix_db
-      - MYSQL_USER=usr_zabbix
-      - MYSQL_PASSWORD=y7QKucyMrHLNzpv7
+      - TZ=America/Sao_Paulo
+      - POSTGRES_DB=zabbix_db
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=y7QKucyMrHLNzpv7
+      - PGSQL_ROOT_PASSWORD=y7QKucyMrHLNzpv7
+    deploy:
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          cpus: "1"
+          memory: 756M
+        reservations:
+          memory: 512M
+          cpus: "0.5"
+    ports:
+      - 45432:5432
     networks:
       - net
-
   zabbix-server:
-    image: zabbix/zabbix-server-mysql:ubuntu-5.0.1
-    links:
-      - mysql
-    restart: always
-    ports:
-      - '10051:10051'
-
-    environment:
-      - DB_SERVER_HOST=mysql
-      - MYSQL_DATABASE=zabbix_db
-      - MYSQL_USER=usr_zabbix
-      - MYSQL_PASSWORD=y7QKucyMrHLNzpv7
-      - ALTER DATABASE zabbix CHARACTER SET utf8 collate utf8_bin; 
-    depends_on:
-      - mysql
-    networks:
-      - net
-
-  zabbix-frontend:
-    image: zabbix/zabbix-web-apache-mysql:ubuntu-5.0.1
-    links:
-      - mysql
-    restart: always
-    ports:
-      - '80:8080'
-      - '443:8443'
-    environment:
-      - DB_SERVER_HOST=mysql
-      - MYSQL_DATABASE=zabbix_db
-      - MYSQL_USER=usr_zabbix
-      - MYSQL_PASSWORD=y7QKucyMrHLNzpv7
-      - PHP_TZ=America/Sao_Paulo
-    depends_on:
-      - mysql
-    networks:
-      - net
-   
-  grafana:
-    image: grafana/grafana
-    links:
-      - mysql
-      - zabbix-server
-    restart: always
-    ports:
-      - '3000:3000'
-    environment: 
-      - GF_INSTALL_PLUGINS=alexanderzobnin-zabbix-app,grafana-piechart-panel,jdbranham-diagram-panel,snuids-trafficlights-panel,camptocamp-prometheus-alertmanager-datasource,doitintl-bigquery-datasource
-    depends_on:
-      - mysql
-      - zabbix-server
-  zabbix-agent:
-    image: zabbix/zabbix-agent2:alpine-5.0.1
-    user: root
-
-    links:
-      - zabbix-server
-    restart: always
+    image: zabbix/zabbix-server-pgsql:centos-6.0.21
     privileged: true
-
+    user: root
+    volumes:
+      - ${STACK_VOLUME}/zabbix/data/usr/lib/zabbix/alertscripts:/usr/lib/zabbix/alertscripts:ro
+      - ${STACK_VOLUME}/zabbix/data/usr/lib/zabbix/extrnalscripts:/usr/lib/zabbix/externalscripts:ro
+      - ${STACK_VOLUME}/zabbix/data/var/lib/zabbix/modules:/var/lib/zabbix/modules:ro
+      - ${STACK_VOLUME}/zabbix/data/var/lib/zabbix/enc:/var/lib/zabbix/enc:ro
+      - ${STACK_VOLUME}/zabbix/data/var/lib/zabbix/ssh_keys:/var/lib/zabbix/ssh_keys:ro
+      - ${STACK_VOLUME}/zabbix/data/var/lib/zabbix/mibs:/var/lib/zabbix/mibs:ro
+      - ${STACK_VOLUME}/zabbix/data/var/lib/zabbix/snmptraps:/var/lib/zabbix/snmptraps:ro
+      - ${STACK_VOLUME}/zabbix/data/var/lib/zabbix/ssl/certs:/var/lib/zabbix/ssl/certs:ro
+      - ${STACK_VOLUME}/zabbix/data/var/lib/zabbix/ssl/keys:/var/lib/zabbix/ssl/keys:ro
+    environment:
+      - TZ=America/Sao_Paulo
+      - DB_SERVER_HOST=pgsql
+      - POSTGRES_DB=zabbix_db
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=y7QKucyMrHLNzpv7
+      - PGSQL_ROOT_PASSWORD=y7QKucyMrHLNzpv7
+      - ZBX_ENABLE_SNMP_TRAPS=true
+      - ZBX_STARTPOLLERS=5
+      - ZBX_STARTPINGERS=1
+      - ZBX_LISTENPORT=10051
+      - ZBX_HOUSEKEEPINGFREQUENCY=1
+      - ZBX_MAXHOUSEKEEPERDELETE=5000
+      - ZBX_PROBLEMHOUSEKEEPINGFREQUENCY=60
+      - ZBX_SENDERFREQUENCY=30
+      - ZBX_CACHEUPDATEFREQUENCY=10
+      - ZBX_STARTDBSYNCERS=4
+      - ZBX_EXPORTFILESIZE=1G
+      - ZBX_HISTORYCACHESIZE=16M
+      - ZBX_HISTORYINDEXCACHESIZE=4M
+      - ZBX_HISTORYSTORAGEDATEINDEX=0
+      - ZBX_TRENDCACHESIZE=4M
+      - ZBX_TRENDFUNCTIONCACHESIZE=4M
+      - ZBX_VALUECACHESIZE=8M
+      - ZBX_UNREACHABLEPERIOD=45
+      - ZBX_UNAVAILABLEDELAY=60
+      - ZBX_UNREACHABLEDELAY=15
+      - ZBX_LOGSLOWQUERIES=3000
+    depends_on:
+      - pgsql
+    deploy:
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1280M
+        reservations:
+          memory: 768M
+          cpus: "0.5"
+    ports:
+      - 10051:10051
+    networks:
+      - net
+  zabbix-frontend:
+    image: zabbix/zabbix-web-nginx-pgsql:6.0-ubuntu-latest
+    ports:
+      - '49080:8080'
+      - '8443:8443'
+    environment:
+      - PHP_TZ=America/Sao_Paulo
+      - ZBX_SERVER_NAME=zabbix-server
+      - DB_SERVER_HOST=pgsql
+      - POSTGRES_DB=zabbix_db
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=y7QKucyMrHLNzpv7
+      - PGSQL_ROOT_PASSWORD=y7QKucyMrHLNzpv7     
+      - ZBX_SERVER_HOST=zabbix-server
+      - ZBX_HOSTNAME=Zabbix server
+      - ZBX_SERVER_PORT=10051
+    depends_on:
+      - pgsql
+      - zabbix-server
+    networks:
+      - net
+  zabbix-agent:
+    user: root
+    image: zabbix/zabbix-agent2:6.0-alpine-latest
+    volumes:
+      - ${STACK_VOLUME}/zabbix/zabbix-agent/data/var/run:/var/run
+    privileged: true
     ports:
       - '10050:10050'
     environment:
-      - ZBX_HOSTNAME=zabbix-server
-      - ZBX_SERVER_HOST=172.18.0.1
+      - ZBX_HOSTNAME=Zabbix server
+      - ZBX_SERVER_HOST=zabbix-server
+    links:
+      - zabbix-server
+    networks:
+      - net
+  zabbix-snmptraps:
+    user: root
+    image: zabbix/zabbix-snmptraps:6.0-centos-latest
+    volumes:
+      - ${STACK_VOLUME}/zabbix/data/var/lib/zabbix/snmptraps:/var/lib/zabbix/snmptraps:rw
+    privileged: true
+    ports:
+      - "161:161/udp"
+    environment:
+      - ZBX_HOSTNAME=Zabbix server
+      - ZBX_SERVER_HOST=zabbix-server
+    links:
+      - zabbix-server
+    networks:
+      - net
+  grafana:
+    image: grafana/grafana:8.5.10-ubuntu
+    user: root
+    volumes:
+      - ${STACK_VOLUME}/grafana/data:/var/lib/grafana
+      - ${STACK_VOLUME}/grafana/imagens:/usr/share/grafana/public/imagens
+    environment:
+      - TZ=America/Sao_Paulo
+      - GF_INSTALL_PLUGINS=${INSTALL_PLUGINS}
+      - GF_SERVER_ROOT_URL=${URL_GRAFANA}
+      - GF_SMTP_ENABLED=true
+      - GF_SMTP_HOST=${SMTP_HOST}
+      - GF_SMTP_FROM_ADDRESS=${SMTP_FROM_ADDRESS}
+      - GF_SMTP_FROM_NAME=${SMTP_FROM_NAME}
+      - GF_SMTP_EHLO_IDENTITY=${SMTP_EHLO}
+    deploy:
+      restart_policy:
+        condition: on-failure
+      resources:
+        limits:
+          cpus: "1"
+          memory: 768M
+        reservations:
+          memory: 512M
+          cpus: "0.5"
+    ports:
+      - 49300:3000
     networks:
       - net
